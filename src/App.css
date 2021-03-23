@@ -1,18 +1,11 @@
 .App {
   text-align: center;
+  font-family: 'Helvetica Neue, serif , sans-serif';
 }
-
 .App-logo {
   height: 40vmin;
   pointer-events: none;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -23,11 +16,62 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
-
+.App-topbar {
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  height: 72px;
+  margin: 0 auto 30px;
+}
 .App-link {
   color: #61dafb;
 }
-
+.pt15 {
+  padding-top: 15px;
+}
+.badge{
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+.badge-success {
+  background: #DEF7EC;
+  color: #03543F;
+}
+.badge-failed {
+  background: #FDE2E1;
+  color: #981B1C;
+}
+.badge-upcoming {
+  color: #92400F;
+  background: #FEF3C7;
+}
+.m0auto {
+  margin: 0 auto;
+}
+table {
+  background: #FFFFFF;
+  border: 1px solid #E4E4E7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+}
+thead {
+  background: #F4F5F7;
+  color: #4B5563;
+  height: 40px;
+  font-family: 'Inter, serif , sans-serif';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 12px;
+  align-items: center;
+}
+.react-bootstrap-table-pagination-list ul {
+  justify-content: flex-end;
+}
+.custom-toggle {
+  margin-bottom: 40px;
+  text-align: end;
+}
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
