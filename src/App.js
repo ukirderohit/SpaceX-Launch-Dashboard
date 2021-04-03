@@ -1,20 +1,36 @@
 import React from 'react';
 import logo from './logo.svg';
-import {Container, Row, Image} from "react-bootstrap";
-import SpaceDetailsComponent from './components/SpaceDetailsComponent';
+import {Row, Image} from "react-bootstrap";
+import HomePage from './components/HomePage';
 import './App.css';
+import {
+    BrowserRouter as Router,
+    Switch,
+    Route,
+    Link,
+    Redirect
+} from "react-router-dom";
 
 function App() {
   return (
     <div className="App">
+        <Router>
         <Row className="App-topbar">
-            <div className="m0auto pt15">
+            <Link to={'/launches'} className="m0auto pt15">
                 <Image src={logo} alt="logo" />
-            </div>
+            </Link>
         </Row>
-        <Container>
-            <SpaceDetailsComponent/>
-        </Container>
+        <Route exact path="/">
+            <Redirect to="/launches" />
+        </Route>
+            <Switch>
+                <Route
+                    exact
+                    path="/"
+                ><Redirect to="/launches" /></Route>
+                <Route path="/launches" component={HomePage} />
+            </Switch>
+        </Router>
     </div>
   );
 }

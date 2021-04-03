@@ -5,7 +5,11 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import paginationFactory from 'react-bootstrap-table2-paginator';
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import Loader from "react-loader-spinner";
-import {Link, useLocation} from "react-router-dom";
+import "antd/dist/antd.css";
+import { DatePicker } from "antd";
+import moment from "moment";
+import {useLocation, useHistory} from "react-router-dom";
+import queryString from 'query-string';
 
 const CustomToggle = React.forwardRef(({ children, onClick }, ref) => {
     return (
@@ -22,7 +26,7 @@ const CustomToggle = React.forwardRef(({ children, onClick }, ref) => {
     </a>
 )});
 
-const SpaceDetailsComponent = () => {
+const SpaceDetailsComponent = (props) => {
     // Pagination Config
     const options = {
         sizePerPage: 12,
@@ -37,7 +41,8 @@ const SpaceDetailsComponent = () => {
         text: 'No:'
     }, {
         dataField: 'launch_date_utc',
-        text: 'Launched (UTC)'
+        text: 'Launched (UTC)',
+        formatter: launchDateUtcFormatter
     },  {
         dataField: 'launch_site.site_name',
         text: 'Location'
@@ -58,27 +63,48 @@ const SpaceDetailsComponent = () => {
 
 
     const location = useLocation();
+    const history = useHistory();
+    const { RangePicker } = DatePicker;
+    const dateFormat = 'YYYY-MM-DD';
     const [launches, setLaunches] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [dateParam, setDateParam] = useState([]);
+    const [toggleName, setToggleName] = useState('All Launches');
 
     useEffect(() => {
         setLoading(true);
         setLaunches([]);
-
         const fetchData = () => {
             const response = fetchJSON(`${location.pathname+location.search}`);
+            if(location.pathname === '/launches/upcoming') {
+                setToggleName('Upcoming Launches');
+            }
+            if(location.pathname === '/launches') {
+                let params = queryString.parse(location.search, { ignoreQueryPrefix: true });
+                if (params.launch_success == 'true') {
+                    setToggleName('Successful Launches');
+                }
+                if (params.launch_success == 'false') {
+                    setToggleName('Failed Launches');
+                }
+                if (params.start) {
+                    setDateParam([params.start,params.end]);
+                } else {
+                    setDateParam(["",""]);
+                }
+            }
             response.then((data)=>{
                 if (data.length > 0) {
                     setLaunches(data);
                     setLoading(false);
+                } else {
+                    setLoading(false);
                 }
             });
         };
-
         setTimeout(()=>{
             fetchData();
         });
-
         return(()=>{
             setLoading(true);
             setLaunches([]);
@@ -102,6 +128,12 @@ const SpaceDetailsComponent = () => {
         }
     }
 
+    function launchDateUtcFormatter(cell, row) {
+            return (
+                <span>{moment(cell).utc().format('DD MMMM YYYY   HH:mm')}</span>
+            );
+    }
+
     function indication() {
         let text = 'No results found for the specified filter';
         if (loading) {
@@ -112,29 +144,96 @@ const SpaceDetailsComponent = () => {
                     className="pt15"
                     height={100}
                     width={100}
-                    timeout={3000} //3 secs
+                    timeout={3000}
                 />
             );
         } else {
-            return (text);
+            return text;
         }
     }
+
+    function onChangeRange(dates, dateStrings) {
+        let queryParams = [];
+        let params = queryString.parse(location.search, { ignoreQueryPrefix: true });
+        for (let par in params) {
+            if (params[par] !== 'null' || params[par] !== 'undefined') {
+                queryParams[par] = params[par]
+            }
+        }
+        if (dateStrings[0]) {
+            queryParams['start'] = dateStrings[0];
+            queryParams['end'] = dateStrings[1];
+        } else {
+            delete queryParams['start'];
+            delete queryParams['end'];
+        }
+        history.replace(`${location.pathname}?${queryString.stringify(queryParams)}`);
+    };
+
+    const setToggleNameFn = (name, url, isLaunchSuccess='') => {
+        let queryParams = [];
+        setToggleName(name);
+        if (name === 'All Launches') {
+            history.replace(`${url}`);
+        } else {
+            let params = queryString.parse(location.search, { ignoreQueryPrefix: true });
+            for (let par in params) {
+                if (params[par] !== 'null' || params[par] !== 'undefined') {
+                    queryParams[par] = params[par]
+                }
+            }
+            if (isLaunchSuccess) {
+                queryParams['launch_success'] = isLaunchSuccess;
+            } else {
+                delete queryParams['launch_success'];
+            }
+            if (queryParams) {
+                history.replace(`${url}?${queryString.stringify(queryParams)}`);
+            } else {
+                history.replace(`${url}`);
+            }
+        }
+    };
+
+    const RangePickerValue = () => {
+        if (dateParam[0]) {
+            return (
+                [moment(dateParam[0], dateFormat), moment(dateParam[1], dateFormat)]
+            )
+        } else {
+            return ["",""];
+        }
+    };
 
     return (
         <React.Fragment>
             <Row>
-                <Col md={6}/>
+                <Col md={6} className="custom-date">
+                    <RangePicker
+                        value={RangePickerValue()}
+                        format={dateFormat}
+                        ranges={{
+                            Today: [moment(), moment()],
+                            "This Month": [moment().startOf("month"), moment().endOf("month")],
+                            "Past Week": [moment().subtract(1, 'weeks').startOf("isoWeek"), moment().subtract(1, 'weeks').endOf("isoWeek")],
+                            "Past Month": [moment().subtract(1, 'months').startOf("months"), moment().subtract(1, 'months').endOf("months")],
+                            "Past 3 Months": [moment().subtract(3, 'months').startOf("months"), moment().subtract(1, 'months').endOf("months")],
+                            "Past 6 Months": [moment().subtract(6, 'months').startOf("months"), moment().subtract(1, 'months').endOf("months")],
+                        }}
+                        onChange={onChangeRange}
+                    />
+                </Col>
                 <Col md={6} className="custom-toggle">
                     <Dropdown>
                         <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                            All Launches
+                            {toggleName}
                         </Dropdown.Toggle>
 
                         <Dropdown.Menu >
-                            <Dropdown.Item eventKey="1"><Link to={'/launches'}>All Launches</Link></Dropdown.Item>
-                            <Dropdown.Item eventKey="2"><Link to={'/launches/upcoming'}>Upcoming Launches</Link></Dropdown.Item>
-                            <Dropdown.Item eventKey="3"><Link to={'/launches?launch_success=true'}>Successful Launches</Link></Dropdown.Item>
-                            <Dropdown.Item eventKey="4"><Link to={'/launches?launch_success=false'}>Failed Launches</Link></Dropdown.Item>
+                            <Dropdown.Item eventKey="1" onClick={()=>setToggleNameFn('All Launches', '/launches')}>All Launches</Dropdown.Item>
+                            <Dropdown.Item eventKey="2" onClick={()=>setToggleNameFn('Upcoming Launches', '/launches/upcoming')}>Upcoming Launches</Dropdown.Item>
+                            <Dropdown.Item eventKey="3" onClick={()=>setToggleNameFn('Successful Launches', '/launches', 'true')}>Successful Launches</Dropdown.Item>
+                            <Dropdown.Item eventKey="4" onClick={()=>setToggleNameFn('Failed Launches', '/launches', 'false')}>Failed Launches</Dropdown.Item>
                         </Dropdown.Menu>
                     </Dropdown>
                 </Col>
