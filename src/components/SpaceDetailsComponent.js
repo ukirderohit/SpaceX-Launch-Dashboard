@@ -6,15 +6,16 @@ import paginationFactory from 'react-bootstrap-table2-paginator';
 import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
 import Loader from "react-loader-spinner";
 import "antd/dist/antd.css";
-import { DatePicker } from "antd";
+import { DatePicker, Modal } from "antd";
 import moment from "moment";
 import {useLocation, useHistory} from "react-router-dom";
 import queryString from 'query-string';
+import SingleLaunchDetails from "./SingleLaunchDetails";
 
 const CustomToggle = React.forwardRef(({ children, onClick }, ref) => {
     return (
     <a
-        href=""
+        href="#"
         ref={ref}
         onClick={(e) => {
             e.preventDefault();
@@ -68,6 +69,9 @@ const SpaceDetailsComponent = (props) => {
     const dateFormat = 'YYYY-MM-DD';
     const [launches, setLaunches] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [loading1, setLoading1] = useState(false);
+    const [modalShow, setModalShow] = useState(false);
+    const [flightDetails, setFlightDetails] = useState([]);
     const [dateParam, setDateParam] = useState([]);
     const [toggleName, setToggleName] = useState('All Launches');
 
@@ -81,11 +85,12 @@ const SpaceDetailsComponent = (props) => {
             }
             if(location.pathname === '/launches') {
                 let params = queryString.parse(location.search, { ignoreQueryPrefix: true });
-                if (params.launch_success == 'true') {
+                if (params.launch_success === 'true') {
                     setToggleName('Successful Launches');
-                }
-                if (params.launch_success == 'false') {
+                } else if (params.launch_success === 'false') {
                     setToggleName('Failed Launches');
+                } else {
+                    setToggleName('All Launches');
                 }
                 if (params.start) {
                     setDateParam([params.start,params.end]);
@@ -204,12 +209,27 @@ const SpaceDetailsComponent = (props) => {
             return ["",""];
         }
     };
+    const fetchSingleLaunchData = (fn) => {
+        const response = fetchJSON(`/launches/${fn}`);
+        response.then((data)=>{
+            setFlightDetails(data);
+            setLoading1(false);
+        });
+    };
+    const rowEvents = {
+        onClick: (e, row, rowIndex) => {
+            setModalShow(true);
+            setLoading1(true);
+            fetchSingleLaunchData(row.flight_number);
+        }
+    };
 
     return (
         <React.Fragment>
             <Row>
                 <Col md={6} className="custom-date">
                     <RangePicker
+                        className="f-helvi"
                         value={RangePickerValue()}
                         format={dateFormat}
                         ranges={{
@@ -225,8 +245,8 @@ const SpaceDetailsComponent = (props) => {
                 </Col>
                 <Col md={6} className="custom-toggle">
                     <Dropdown>
-                        <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components">
-                            {toggleName}
+                        <Dropdown.Toggle as={CustomToggle} id="dropdown-custom-components f-helvi">
+                            <span className="f-helvi">{toggleName}</span>
                         </Dropdown.Toggle>
 
                         <Dropdown.Menu >
@@ -240,9 +260,19 @@ const SpaceDetailsComponent = (props) => {
             </Row>
             <Row>
                 <Col>
-                    <BootstrapTable keyField='id' data={ launches } columns={ columns } pagination={ paginationFactory(options) } noDataIndication={indication} />
+                    <BootstrapTable keyField='launch_date_utc' data={ launches } columns={ columns } pagination={ paginationFactory(options) } noDataIndication={indication} rowEvents={ rowEvents } />
                 </Col>
             </Row>
+            <Modal
+                width={'540px'}
+                centered
+                visible={modalShow}
+                footer={null}
+                onOk={() => setModalShow(false)}
+                onCancel={() => setModalShow(false)}
+            >
+                <SingleLaunchDetails flight_details={flightDetails} loading={loading1}/>
+            </Modal>
         </React.Fragment>
     );
 };

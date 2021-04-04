@@ -1,6 +1,9 @@
 .App {
   text-align: center;
-  font-family: 'Helvetica Neue, serif , sans-serif';
+  font-family: 'Inter, serif , sans-serif';
+}
+.f-helvi {
+  font-family: 'Helvetica Neue, serif , sans-serif' !important;
 }
 .App-logo {
   height: 40vmin;
@@ -75,6 +78,27 @@ thead {
 .custom-date {
   margin-bottom: 40px;
   text-align: start;
+}
+.table {
+  border: 1px solid #E4E4E7;
+  transform: rotate(0.11deg);
+}
+.mission-name {
+  font-size: 18px;
+  line-height: 18px;
+  font-weight: bold;
+}
+th {
+  font-weight: 500 !important;
+  font-size: 14px;
+  line-height: 14px;
+  color: #4B5563;
+}
+tr {
+  font-weight: 400 !important;
+  font-size: 14px;
+  line-height: 14px;
+  color: #1F2937;
 }
 @keyframes App-logo-spin {
   from {
